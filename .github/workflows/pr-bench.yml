@@ -143,7 +143,11 @@ jobs:
               body += `| Metrica | Valor |\n`;
               body += `|---------|-------|\n`;
               body += `| Throughput | **${metrics.throughput} txn/s** |\n`;
-              body += `| Stress latencia | **${metrics.stress_elapsed_ms}ms** (${metrics.stress_created}/${metrics.stress_total} txns) |\n`;
+              body += `| Total | **${metrics.stress_created}/${metrics.stress_total} txns** em ${metrics.stress_elapsed_ms}ms |\n`;
+              body += `| Latencia avg | **${metrics.latency_avg_ms || '-'}ms** |\n`;
+              body += `| Latencia p50 | **${metrics.latency_p50_ms || '-'}ms** |\n`;
+              body += `| Latencia p95 | **${metrics.latency_p95_ms || '-'}ms** |\n`;
+              body += `| Latencia p99 | **${metrics.latency_p99_ms || '-'}ms** |\n`;
             }
 
             body += renderCategory('Regras de negocio (API)', results.rules, scoring.rules);
