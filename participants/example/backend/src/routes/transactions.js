@@ -20,6 +20,19 @@ function calculateInterest(amountCents, installments) {
 
 const DAILY_LIMIT_CENTS = 500000
 const MIN_INSTALLMENT_CENTS = 1000
+const MAX_RETRIES = 5
+
+async function withRetry(fn) {
+  for (let attempt = 0; attempt < MAX_RETRIES; attempt++) {
+    try {
+      return await fn()
+    } catch (err) {
+      const isRetryable = err.code === 'P2034' || err.message?.includes('SQLITE_BUSY')
+      if (!isRetryable || attempt === MAX_RETRIES - 1) throw err
+      await new Promise(r => setTimeout(r, 50 * Math.pow(2, attempt) + Math.random() * 50))
+    }
+  }
+}
 
 export default async function (fastify) {
 
@@ -132,45 +145,47 @@ export default async function (fastify) {
     tomorrow.setDate(tomorrow.getDate() + 1)
 
     try {
-      const tx = await prisma.$transaction(async (prismaClient) => {
-        // Checar limite diario (so se for approved)
-        if (!isDeclined) {
-          const dailyTotal = await prismaClient.transaction.aggregate({
-            where: {
-              cardLast4,
-              status: 'approved',
-              createdAt: {
-                gte: today,
-                lt: tomorrow,
+      const tx = await withRetry(() =>
+        prisma.$transaction(async (prismaClient) => {
+          // Checar limite diario (so se for approved)
+          if (!isDeclined) {
+            const dailyTotal = await prismaClient.transaction.aggregate({
+              where: {
+                cardLast4,
+                status: 'approved',
+                createdAt: {
+                  gte: today,
+                  lt: tomorrow,
+                },
               },
-            },
-            _sum: { totalWithInterest: true },
-          })
+              _sum: { totalWithInterest: true },
+            })
 
-          const usedToday = dailyTotal._sum.totalWithInterest ?? 0
-          if (usedToday + totalWithInterest > DAILY_LIMIT_CENTS) {
-            throw new Error('DAILY_LIMIT_EXCEEDED')
+            const usedToday = dailyTotal._sum.totalWithInterest ?? 0
+            if (usedToday + totalWithInterest > DAILY_LIMIT_CENTS) {
+              throw new Error('DAILY_LIMIT_EXCEEDED')
+            }
           }
-        }
 
-        return prismaClient.transaction.create({
-          data: {
-            id: uuidv4(),
-            idempotencyKey: idempotency_key,
-            status: isDeclined ? 'declined' : 'approved',
-            cardLast4,
-            cardBrand: brandName,
-            holderName: holder_name,
-            amountCents: amount_cents,
-            installments: parsedInstallments,
-            installmentAmount,
-            totalWithInterest: totalWithInterest,
-            feeCents,
-            netAmount,
-            description,
-          },
+          return prismaClient.transaction.create({
+            data: {
+              id: uuidv4(),
+              idempotencyKey: idempotency_key,
+              status: isDeclined ? 'declined' : 'approved',
+              cardLast4,
+              cardBrand: brandName,
+              holderName: holder_name,
+              amountCents: amount_cents,
+              installments: parsedInstallments,
+              installmentAmount,
+              totalWithInterest: totalWithInterest,
+              feeCents,
+              netAmount,
+              description,
+            },
+          })
         })
-      })
+      )
 
       return reply.code(201).send(formatTransaction(tx))
     } catch (err) {

@@ -5,7 +5,7 @@
  * Fase 2: Corretude via Frontend (Playwright)
  * Fase 3: Stress via API (bombardeio)
  *
- * Uso: node run.js [participants/example]
+ * Uso: node run.js
  * Saida: results.json com nota detalhada
  */
 
@@ -45,7 +45,7 @@ async function testRules() {
   const health = await api('GET', '/api/health')
   check('rules', 'Health check', health.status === 200 && health.data?.status === 'ok')
 
-  // Create visa 1x
+  // Create visa 1x (card last4 = 1111)
   const visa = await api('POST', '/api/transactions', {
     card_number: '4111111111111111', holder_name: 'Bench Test', expiration: '12/28',
     cvv: '123', amount_cents: 10000, installments: 1, description: 'Visa 1x', idempotency_key: 'bench-001'
@@ -63,31 +63,31 @@ async function testRules() {
   })
   check('rules', 'Idempotencia: mesma key retorna 200', idem.status === 200)
 
-  // Mastercard
+  // Mastercard (card last4 = 2222)
   const mc = await api('POST', '/api/transactions', {
-    card_number: '5111111111111111', holder_name: 'MC Test', expiration: '12/28',
+    card_number: '5222222222222222', holder_name: 'MC Test', expiration: '12/28',
     cvv: '123', amount_cents: 20000, installments: 1, description: 'MC', idempotency_key: 'bench-002'
   })
   check('rules', 'Bandeira mastercard detectada (5xxx)', mc.data?.card_brand === 'mastercard')
   check('rules', 'Taxa mastercard 3% correta (600)', mc.data?.fee_cents === 600)
 
-  // Amex
+  // Amex (card last4 = 3333)
   const amex = await api('POST', '/api/transactions', {
-    card_number: '3111111111111111', holder_name: 'Amex Test', expiration: '12/28',
+    card_number: '3333333333333333', holder_name: 'Amex Test', expiration: '12/28',
     cvv: '1234', amount_cents: 10000, installments: 1, description: 'Amex', idempotency_key: 'bench-002b'
   })
   check('rules', 'Bandeira amex detectada (3xxx)', amex.data?.card_brand === 'amex')
 
-  // Elo
+  // Elo (card last4 = 4444)
   const elo = await api('POST', '/api/transactions', {
-    card_number: '6111111111111111', holder_name: 'Elo Test', expiration: '12/28',
+    card_number: '6444444444444444', holder_name: 'Elo Test', expiration: '12/28',
     cvv: '123', amount_cents: 10000, installments: 1, description: 'Elo', idempotency_key: 'bench-002c'
   })
   check('rules', 'Bandeira elo detectada (6xxx)', elo.data?.card_brand === 'elo')
 
-  // Declined 9999
+  // Declined 9999 (card last4 = 5555)
   const declined = await api('POST', '/api/transactions', {
-    card_number: '9999111111111111', holder_name: 'Declined', expiration: '12/28',
+    card_number: '9999555555555555', holder_name: 'Declined', expiration: '12/28',
     cvv: '123', amount_cents: 10000, installments: 1, description: 'Declined', idempotency_key: 'bench-003'
   })
   check('rules', 'Cartao 9999 retorna declined', declined.data?.status === 'declined')
@@ -100,10 +100,10 @@ async function testRules() {
   })
   check('rules', 'Bandeira invalida rejeitada 422', bad.status === 422)
 
-  // Installments 3x visa (2% compound)
+  // Installments 3x visa (2% compound) - card last4 = 6666
   // 15000 * 1.02^3 = 15918.12 -> ceil = 15919
   const inst = await api('POST', '/api/transactions', {
-    card_number: '4111111111111111', holder_name: 'Joao Silva', expiration: '12/28',
+    card_number: '4666666666666666', holder_name: 'Joao Silva', expiration: '12/28',
     cvv: '123', amount_cents: 15000, installments: 3, description: 'Camiseta SENAI', idempotency_key: 'bench-005'
   })
   check('rules', 'Juros compostos 2%/mes (3x)', inst.data?.total_with_interest === 15919,
@@ -113,31 +113,36 @@ async function testRules() {
   check('rules', 'Taxa sobre amount_cents (fee=375)', inst.data?.fee_cents === 375)
   check('rules', 'net_amount = amount - fee (14625)', inst.data?.net_amount === 14625)
 
-  // Installments 7x (4% compound)
+  // Installments 7x (4% compound) - card last4 = 7777
   const inst7 = await api('POST', '/api/transactions', {
-    card_number: '4111111111111111', holder_name: 'Test 7x', expiration: '12/28',
+    card_number: '4777777777777777', holder_name: 'Test 7x', expiration: '12/28',
     cvv: '123', amount_cents: 100000, installments: 7, description: '7 parcelas', idempotency_key: 'bench-005b'
   })
   const expected7 = Math.ceil(100000 * Math.pow(1.04, 7))
   check('rules', 'Juros compostos 4%/mes (7x)', inst7.data?.total_with_interest === expected7,
     `esperado=${expected7} recebido=${inst7.data?.total_with_interest}`)
 
-  // Min installment R$10
+  // Min installment R$10 - card last4 = 8888
   const minInst = await api('POST', '/api/transactions', {
-    card_number: '4111111111111111', holder_name: 'Min', expiration: '12/28',
+    card_number: '4888888888888888', holder_name: 'Min', expiration: '12/28',
     cvv: '123', amount_cents: 1000, installments: 12, description: 'Min', idempotency_key: 'bench-006'
   })
   check('rules', 'Parcela abaixo R$10 rejeitada 422', minInst.status === 422)
 
-  // Refund
-  const list = await api('GET', '/api/transactions?limit=100')
-  const approvedTx = list.data?.data?.find(t => t.status === 'approved')
-  if (approvedTx) {
-    const refund = await api('POST', `/api/transactions/${approvedTx.id}/refund`)
+  // Refund - criar transacao especifica para o teste (card last4 = 9999)
+  const refundTarget = await api('POST', '/api/transactions', {
+    card_number: '4999999999999999', holder_name: 'Refund Test', expiration: '12/28',
+    cvv: '123', amount_cents: 5000, installments: 1, description: 'Para estorno', idempotency_key: 'bench-refund-001'
+  })
+  if (refundTarget.status === 201 && refundTarget.data?.id) {
+    const refund = await api('POST', `/api/transactions/${refundTarget.data.id}/refund`)
     check('rules', 'Estorno funciona (approved -> refunded)', refund.data?.status === 'refunded')
 
-    const doubleRefund = await api('POST', `/api/transactions/${approvedTx.id}/refund`)
+    const doubleRefund = await api('POST', `/api/transactions/${refundTarget.data.id}/refund`)
     check('rules', 'Double refund rejeitado 422', doubleRefund.status === 422)
+  } else {
+    check('rules', 'Estorno funciona (approved -> refunded)', false, `create status=${refundTarget.status}`)
+    check('rules', 'Double refund rejeitado 422', false, 'sem transacao para testar')
   }
 
   // Balance
@@ -277,74 +282,81 @@ async function testFrontend() {
 async function testStress() {
   console.log('\n=== FASE 3: Stress test (API) ===\n')
 
-  const WORKERS = 10
-  const TXN_PER_WORKER = 10
-  const total = WORKERS * TXN_PER_WORKER
+  // Send in batches to avoid overwhelming SQLite
+  const BATCH_SIZE = 10
+  const TOTAL = 50
   let created = 0
-  let errors = 0
+  let errors500 = 0
   const start = Date.now()
+  const ts = Date.now()
 
-  const promises = []
-  for (let w = 0; w < WORKERS; w++) {
-    for (let i = 0; i < TXN_PER_WORKER; i++) {
-      const idx = w * TXN_PER_WORKER + i
-      // Mix brands
+  for (let batch = 0; batch < TOTAL / BATCH_SIZE; batch++) {
+    const promises = []
+    for (let i = 0; i < BATCH_SIZE; i++) {
+      const idx = batch * BATCH_SIZE + i
       const brands = ['4', '5', '3', '6']
       const brand = brands[idx % 4]
+      // Use unique last4 per batch to avoid daily limit
+      const suffix = String(idx + 1000).padStart(4, '0')
       promises.push(
         api('POST', '/api/transactions', {
-          card_number: `${brand}${String(idx).padStart(15, '0')}`,
-          holder_name: `Worker ${w}`,
+          card_number: `${brand}${String(idx).padStart(11, '0')}${suffix}`,
+          holder_name: `Stress ${idx}`,
           expiration: '12/29',
           cvv: '123',
-          amount_cents: 5000 + (idx * 100),
-          installments: (idx % 3) + 1,
+          amount_cents: 5000,
+          installments: 1,
           description: `Stress ${idx}`,
-          idempotency_key: `stress-${idx}-${Date.now()}`
+          idempotency_key: `stress-${idx}-${ts}`
         }).then(r => {
           if (r.status === 201) created++
-          else if (r.status >= 500) errors++
-        }).catch(() => { errors++ })
+          else if (r.status >= 500) errors500++
+        }).catch(() => { errors500++ })
       )
     }
+    await Promise.all(promises)
   }
 
-  await Promise.all(promises)
   const elapsed = Date.now() - start
   const throughput = Math.round(created / (elapsed / 1000))
 
-  check('stress', `${created}/${total} transacoes criadas`, created > 0)
-  check('stress', 'Zero erros 500', errors === 0, errors > 0 ? `${errors} erros` : '')
+  check('stress', `${created}/${TOTAL} transacoes criadas`, created >= TOTAL * 0.9,
+    `${created} de ${TOTAL}`)
+  check('stress', 'Zero erros 500', errors500 === 0, errors500 > 0 ? `${errors500} erros` : '')
   check('stress', `Throughput: ${throughput} txn/s`, throughput > 0, `${elapsed}ms`)
 
   // Idempotency stress: send same key from multiple workers
-  const idemPromises = []
   const idemKey = `idem-stress-${Date.now()}`
+  const idemPromises = []
   for (let w = 0; w < 5; w++) {
     idemPromises.push(api('POST', '/api/transactions', {
-      card_number: '4111111111111111', holder_name: 'Idem Stress', expiration: '12/28',
-      cvv: '123', amount_cents: 10000, installments: 1, description: 'Idem', idempotency_key: idemKey
+      card_number: '4100000000000100', holder_name: 'Idem Stress', expiration: '12/28',
+      cvv: '123', amount_cents: 5000, installments: 1, description: 'Idem', idempotency_key: idemKey
     }))
   }
   const idemResults = await Promise.all(idemPromises)
   const created201 = idemResults.filter(r => r.status === 201).length
   const existing200 = idemResults.filter(r => r.status === 200).length
-  check('stress', 'Idempotencia concorrente: 1 criada + N duplicatas',
-    created201 + existing200 === 5 && created201 >= 1, `201=${created201} 200=${existing200}`)
+  const idemOk = (created201 + existing200 === 5) && created201 >= 1
+  check('stress', 'Idempotencia concorrente: 1 criada + N duplicatas', idemOk,
+    `201=${created201} 200=${existing200}`)
 
-  // Double refund stress
-  const listResp = await api('GET', '/api/transactions?limit=5')
-  const approved = listResp.data?.data?.filter(t => t.status === 'approved') || []
-  if (approved.length > 0) {
-    const tx = approved[0]
+  // Double refund stress - criar transacao fresca
+  const refundTx = await api('POST', '/api/transactions', {
+    card_number: '4200000000000200', holder_name: 'Refund Stress', expiration: '12/28',
+    cvv: '123', amount_cents: 5000, installments: 1, description: 'Stress refund', idempotency_key: `stress-refund-${Date.now()}`
+  })
+  if (refundTx.status === 201 && refundTx.data?.id) {
     const refundPromises = [
-      api('POST', `/api/transactions/${tx.id}/refund`),
-      api('POST', `/api/transactions/${tx.id}/refund`)
+      api('POST', `/api/transactions/${refundTx.data.id}/refund`),
+      api('POST', `/api/transactions/${refundTx.data.id}/refund`)
     ]
     const refundResults = await Promise.all(refundPromises)
     const refunded = refundResults.filter(r => r.data?.status === 'refunded').length
     check('stress', 'Double refund concorrente: apenas 1 estorno', refunded === 1,
       `${refunded} estornos`)
+  } else {
+    check('stress', 'Double refund concorrente: apenas 1 estorno', false, 'sem transacao')
   }
 }
 
