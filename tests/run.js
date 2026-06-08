@@ -4,7 +4,6 @@ import { chromium } from 'playwright'
 import { api, waitForServer, BASE } from './helpers.js'
 import { record, setMetrics, writeResults } from './collector.js'
 
-// Wrap assert + record into one call
 function check(category, name, value, detail = '') {
   record(category, name, !!value, detail)
   assert.ok(value, `${name}${detail ? ' -- ' + detail : ''}`)
@@ -18,9 +17,6 @@ after(() => {
   writeResults()
 })
 
-// ============================================================
-// FASE 1: Regras de negocio via API
-// ============================================================
 describe('Regras de negocio (API)', { concurrency: 1 }, () => {
 
   it('health check', async () => {
@@ -149,9 +145,6 @@ describe('Regras de negocio (API)', { concurrency: 1 }, () => {
   })
 })
 
-// ============================================================
-// FASE 2: Frontend via Playwright
-// ============================================================
 describe('Frontend (Playwright)', { concurrency: 1 }, () => {
   let browser, page
 
@@ -270,9 +263,6 @@ describe('Frontend (Playwright)', { concurrency: 1 }, () => {
   })
 })
 
-// ============================================================
-// FASE 3: Stress via API
-// ============================================================
 describe('Stress test (API)', { concurrency: 1 }, () => {
 
   it('throughput com 20 workers', async () => {
