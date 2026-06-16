@@ -48,7 +48,7 @@ jobs:
         if: steps.team.outputs.skip != 'true'
         working-directory: ${{ steps.team.outputs.dir }}
         run: |
-          rm -f data.db data.db-*
+          rm -f data.db data.db-* package-lock.json
           npm install
           npm run build
 
