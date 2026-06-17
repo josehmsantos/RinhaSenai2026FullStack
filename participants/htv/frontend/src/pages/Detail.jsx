@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import './styles/detail.css'
+import '../styles/detail.css'
 
 export default function Detail() {
   const { id } = useParams()

@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import './styles/dashboard.css'
+import '../styles/dashboard.css'
 
 export default function Dashboard() {
 

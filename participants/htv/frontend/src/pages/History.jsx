@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import './styles/history.css'
+import '../styles/history.css'
 
 export default function History() {
   const [searchParams, setSearchParams] = useSearchParams()
