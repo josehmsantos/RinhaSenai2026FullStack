@@ -11,13 +11,13 @@ body {
   color: #333;
 }
 
-div {
+.dashboard-container {
     max-width: 800px;
     margin: 0 auto;
     padding: 20px;
 }
 
-h1 {
+.dashboard-container h1 {
     text-align: center;
     font-size: 2rem;
     color: #1a1a2e;
@@ -28,9 +28,9 @@ h1 {
     letter-spacing: 2px;
 }
 
-h2 {
+.dashboard-container h2 {
     color: #1a1a2e;
-    font-size: 1,5rem;
+    font-size: 1.5rem;
     margin-bottom: 20px;
     padding-left: 10px;
     border-left: 4px solid #0f3460;
@@ -43,18 +43,25 @@ h2 {
     margin-bottom: 25px;
     font-weight: 600;
     text-align: center;
-    animation: slideDonw 0.4s ease-out;
+    animation: slideDown 0.4s ease-out;
 }
 
 .feedback-success {
+    background: linear-gradient(135deg, #d4edda, #c3e6cb);
+    color: #155724;
+    border: 1px solid #28a745;
+    box-shadow: 0 2px 8px rgba(40, 167, 69, 0.2);
+}
+
+.feedback-error {
     background: linear-gradient(135deg, #f8d7da, #f5c6cd);
     color: #721c24;
     border: 1px solid #dc3545;
     box-shadow: 0 2px 8px rgba(220, 53, 69, 0.2);
 }
 
-@keyframes slidedonw {
-    from{
+@keyframes slideDown {
+    from {
         opacity: 0;
         transform: translateY(-20px);
     }
@@ -64,7 +71,7 @@ h2 {
     }
 }
 
-form{
+.dashboard-form {
     background: white;
     padding: 30px;
     border-radius: 12px;
@@ -75,15 +82,15 @@ form{
     gap: 20px;
 }
 
-form div:first-child {
+.dashboard-form div:first-child {
     grid-column: 1 / -1;
 }
 
-form div:nth-last-child(2) {
+.dashboard-form div:nth-last-child(2) {
     grid-column: 1 / -1;
 }
 
-label {
+.dashboard-form label {
     display: block;
     font-size: 0.85rem;
     color: #495057;
@@ -92,38 +99,38 @@ label {
     letter-spacing: 0.5px;
 }
 
-input,
-select {
+.dashboard-form input,
+.dashboard-form select {
     width: 100%;
     padding: 12px 15px;
     border: 2px solid #e1e5eb;
     border-radius: 8px;
     font-size: 1rem;
-    transition: all 0.3 ease;
+    transition: all 0.3s ease;
     background: #f8f9fa;
     color: #333;
 }
 
-input:focus,
-select:focus {
+.dashboard-form input:focus,
+.dashboard-form select:focus {
     outline: none;
     border-color: #0f3460;
     box-shadow: 0 0 0 3px rgba(15, 52, 96, 0.15);
     background: white;
 }
 
-input:hover,
-select:hover {
+.dashboard-form input:hover,
+.dashboard-form select:hover {
     border-color: #adb5bd;
     background: white;
 }
 
-input::placeholder {
+.dashboard-form input::placeholder {
     color: #adb5bd;
     font-size: 0.9rem;
 }
 
-select {
+.dashboard-form select {
     cursor: pointer;
     appearance: none;
     background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23495057' d='M6 8L1 3h10z'/%3E%3C/svg%3E");
@@ -159,14 +166,14 @@ select {
   box-shadow: 0 2px 10px rgba(15, 52, 96, 0.3);
 }
 
-hr {
+.dashboard-divider {
     border: none;
     height: 2px;
     background: linear-gradient(to right, transparent, #0f3460, transparent);
     margin: 30px 0;
 }
 
-div > h2 + div {
+.balance-grid {
     background: white;
     padding: 25px 30px;
     border-radius: 12px;
@@ -176,7 +183,7 @@ div > h2 + div {
     gap: 20px;
 }
 
-div > h2 + div p {
+.balance-grid p {
     padding: 15px;
     background: #f8f9fa;
     border-radius: 8px;
@@ -186,7 +193,7 @@ div > h2 + div p {
     font-size: 0.95rem;
 }
 
-div > h2 + div p:first-child {
+.balance-grid p:first-child {
   grid-column: 1 / -1;
   background: linear-gradient(135deg, #e8f0fe, #d4e4fd);
   border-left-color: #28a745;
@@ -220,7 +227,7 @@ div > h2 + div p:first-child {
 }
 
 /* Loading */
-div > p:only-child {
+.dashboard-container > p:only-child {
   text-align: center;
   color: #6c757d;
   font-style: italic;
@@ -229,22 +236,22 @@ div > p:only-child {
 
 /* ===== Responsivo ===== */
 @media (max-width: 768px) {
-  div {
+  .dashboard-container {
     padding: 15px;
   }
 
-  h1 {
+  .dashboard-container h1 {
     font-size: 1.5rem;
   }
 
-  form {
+  .dashboard-form {
     grid-template-columns: 1fr;
     padding: 20px;
     gap: 15px;
   }
 
-  form div:first-child,
-  form div:nth-last-child(2) {
+  .dashboard-form div:first-child,
+  .dashboard-form div:nth-last-child(2) {
     grid-column: 1;
   }
 
@@ -252,11 +259,11 @@ div > p:only-child {
     grid-column: 1;
   }
 
-  div > h2 + div {
+  .balance-grid {
     grid-template-columns: 1fr;
   }
 
-  div > h2 + div p:first-child {
+  .balance-grid p:first-child {
     grid-column: 1;
   }
 }

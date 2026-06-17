@@ -50,17 +50,21 @@ export default function Dashboard() {
       })
 
 
-      if(res.status === 201) {
+      if (res.status === 201) {
         const data = await res.json()
-        setFeedback({ type: 'sucess', message: `Pagamento aprovado! ID: ${data.id}`})
 
+        // Verifica o status real da transação, não apenas o HTTP status
+        if (data.status === 'declined') {
+          setFeedback({ type: 'error', message: 'Transação recusada' })
+        } else {
+          setFeedback({ type: 'success', message: `Pagamento aprovado! ID: ${data.id}` })
+        }
 
-        const balanceRes = await fetch ('/api/balance')
+        const balanceRes = await fetch('/api/balance')
         const balanceData = await balanceRes.json()
         setBalance(balanceData)
 
-
-        setCardNumber ('')
+        setCardNumber('')
         setHolderName('')
         setExpiration('')
         setCvv('')
@@ -69,13 +73,14 @@ export default function Dashboard() {
         setDescription('')
       } else if (res.status === 422) {
         const data = await res.json()
-        setFeedback({ type: 'error', message: data.error || 'Dados inválidos'})
+        setFeedback({ type: 'error', message: data.error || 'Dados inválidos' })
       } else {
-        const data = await res.json()
-        if (data.status === 'declined') {
-          setFeedback({ type: 'error', message: 'Transação recusada'})
-        } else {
-          setFeedback({ type: 'error', message: 'Erro desconhecido'})
+        // Trata erros 500 ou respostas inesperadas de forma segura
+        try {
+          const data = await res.json()
+          setFeedback({ type: 'error', message: data.error || 'Erro desconhecido' })
+        } catch {
+          setFeedback({ type: 'error', message: `Erro do servidor (${res.status})` })
         }
       }
     } catch (err) {
@@ -85,20 +90,20 @@ export default function Dashboard() {
 
 
   return(
-    <div>
+    <div className="dashboard-container">
       <h1>Gateway de Pagamento</h1>
 
 
       {/*Feedback*/}
       {feedback && (
-        <div className={feedback.type === 'sucess' ? 'feedback-success' : 'feedback-error'}>
+        <div className={feedback.type === 'success' ? 'feedback-success' : 'feedback-error'}>
           {feedback.message}
           </div>
       )}
 
 
       {/*Formulário*/}
-      < form onSubmit={handleSubmit}>
+      <form className="dashboard-form" onSubmit={handleSubmit}>
       <div>
         <label>Número do cartão:</label>
         <input
@@ -173,38 +178,38 @@ export default function Dashboard() {
         <button className = "btn-pay" type="submit">Pagar</button>
         </form>
 
-        <hr />
+        <hr className="dashboard-divider" />
 
         {/* Saldo */}
         <h2>Resumo do Saldo</h2>
         {balance ? (
-          <div>
+          <div className="balance-grid">
             <p>
-              Saldo líquido:{ '' }
-              <span className="display-balance" data-value={balance.balance_cents}>
-                R$ {(balance.balance_cents / 100).toFixed(2)}
+              Saldo líquido:{ ' ' }
+              <span className="display-balance" data-value={balance.balance_cents ?? 0}>
+                R$ {((balance.balance_cents ?? 0) / 100).toFixed(2)}
               </span>
             </p>
 
             <p>
               Total aprovadas: { ' '}
-              <span className="display-balance" data-value={balance.total_approved}>
-              {balance.total_approved}
+              <span className="display-total-approved" data-value={balance.total_approved ?? 0}>
+              {balance.total_approved ?? 0}
               </span>
             </p>
 
             <p>
               Total recusadas: {' '}
-              <span className="display-total-declined" data-value={balance.total_declined}>
-                {balance.total_declined}
+              <span className="display-total-declined" data-value={balance.total_declined ?? 0}>
+                {balance.total_declined ?? 0}
               </span>
             </p>
 
 
             <p>
               Total estornadas: { ' ' }
-              <span className="display-total-refunded" data-value={balance.total_refunded}>
-                {balance.total_refunded}
+              <span className="display-total-refunded" data-value={balance.total_refunded ?? 0}>
+                {balance.total_refunded ?? 0}
               </span>
             </p>
             </div>
@@ -214,4 +219,3 @@ export default function Dashboard() {
     </div>
   )
 }
-

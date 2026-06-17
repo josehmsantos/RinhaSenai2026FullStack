@@ -1,4 +1,4 @@
-h1 {
+.history-container h1 {
   text-align: center;
   color: #1a1a2e;
   font-size: 2rem;
@@ -10,7 +10,7 @@ h1 {
 }
 
 /* ===== Loading ===== */
-p:only-child {
+.history-container > p:only-child {
   text-align: center;
   color: #6c757d;
   font-style: italic;
@@ -51,8 +51,7 @@ p:only-child {
   gap: 8px;
 }
 
-.transaction-item p::before {
-  content: attr(data-label);
+.transaction-item .field-label {
   font-weight: 600;
   color: #1a1a2e;
   min-width: 120px;
@@ -127,6 +126,24 @@ p:only-child {
   color: #6c757d;
 }
 
+/* Link para detalhes */
+.transaction-link {
+  display: inline-block;
+  margin-top: 10px;
+  color: #0f3460;
+  font-weight: 600;
+  text-decoration: none;
+  font-size: 0.85rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  transition: color 0.2s ease;
+}
+
+.transaction-link:hover {
+  color: #1a1a2e;
+  text-decoration: underline;
+}
+
 /* ===== Botão de estorno ===== */
 .btn-refund {
   margin-top: 15px;
@@ -160,8 +177,17 @@ p:only-child {
 }
 
 /* ===== Paginação ===== */
-div > .btn-prev-page,
-div > .btn-next-page {
+.pagination-controls {
+  text-align: center;
+  margin-top: 30px;
+  padding: 20px;
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+}
+
+.btn-prev-page,
+.btn-next-page {
   padding: 12px 25px;
   background: linear-gradient(135deg, #0f3460, #1a1a2e);
   color: white;
@@ -190,7 +216,7 @@ div > .btn-next-page {
 }
 
 /* Informações da página */
-div > p {
+.pagination-info {
   text-align: center;
   margin-bottom: 20px;
   font-size: 1rem;
@@ -212,23 +238,13 @@ div > p {
   border-radius: 6px;
 }
 
-/* Container da paginação */
-div:has(.btn-prev-page) {
-  text-align: center;
-  margin-top: 30px;
-  padding: 20px;
-  background: white;
-  border-radius: 12px;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
-}
-
 /* ===== Responsivo ===== */
 @media (max-width: 768px) {
-  div {
+  .history-container {
     padding: 15px;
   }
 
-  h1 {
+  .history-container h1 {
     font-size: 1.5rem;
   }
 
@@ -248,3 +264,4 @@ div:has(.btn-prev-page) {
     font-size: 0.85rem;
     margin: 5px;
   }
+}

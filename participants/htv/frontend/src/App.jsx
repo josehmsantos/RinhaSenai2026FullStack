@@ -1,17 +1,20 @@
-import { Routes, Route, Link } from 'react-router'
+import { Routes, Route, NavLink } from 'react-router'
 import Dashboard from './pages/Dashboard.jsx'
 import History from './pages/History.jsx'
 import Detail from './pages/Detail.jsx'
+import './styles/app.css'
 
 export default function App() {
   return (
-    <div>
-      <nav>
-        <Link to="/">Dashboard</Link>
-        {' | '}
-        <Link to="/history">Historico</Link>
+    <div className="app-container">
+      <nav className="app-nav">
+        <NavLink to="/" end className={({ isActive }) => isActive ? 'active' : ''}>
+          Dashboard
+        </NavLink>
+        <NavLink to="/history" className={({ isActive }) => isActive ? 'active' : ''}>
+          Histórico
+        </NavLink>
       </nav>
-      <hr />
       <Routes>
         <Route path="/" element={<Dashboard />} />
         <Route path="/history" element={<History />} />

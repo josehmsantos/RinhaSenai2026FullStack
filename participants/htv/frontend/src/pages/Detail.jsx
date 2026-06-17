@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react'
-
+import { useParams } from 'react-router'
 import '../styles/detail.css'
-
 
 export default function Detail() {
   const { id } = useParams()
@@ -42,22 +41,22 @@ export default function Detail() {
   }
 
   // Enquanto carrega
-  if (loading) return <div>Carregando...</div>
+  if (loading) return <div className="detail-container"><p>Carregando...</p></div>
 
   // Se deu erro
-  if (error) return <div>Erro: {error}</div>
+  if (error) return <div className="detail-container"><p>Erro: {error}</p></div>
 
   // Se não encontrou
-  if (!transaction) return <div>Transação não encontrada</div>
+  if (!transaction) return <div className="detail-container"><p>Transação não encontrada</p></div>
 
   // Formatar data
   const date = new Date(transaction.created_at).toLocaleString('pt-BR')
 
   return (
-    <div>
+    <div className="detail-container">
       <h1>Detalhe da Transacao</h1>
 
-      <table>
+      <table className="detail-table">
         <tbody>
           <tr>
             <td>ID:</td>
@@ -147,4 +146,3 @@ export default function Detail() {
     </div>
   )
 }
-  

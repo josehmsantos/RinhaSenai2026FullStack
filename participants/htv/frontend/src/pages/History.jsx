@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import '../styles/history.css'
-import { useSearchParams } from 'react-router'
+import { useSearchParams, Link } from 'react-router'
 
 
 
@@ -14,18 +14,25 @@ export default function History() {
   const page = Number(searchParams.get('page')) || 1
   const limit = Number(searchParams.get('limit')) || 10
 
+  const [error, setError] = useState(null)
+
   // Buscar transações quando page ou limit mudar
   useEffect(() => {
     setLoading(true)
+    setError(null)
     fetch(`/api/transactions?page=${page}&limit=${limit}`)
-      .then(res => res.json())
+      .then(res => {
+        if (!res.ok) throw new Error(`Erro do servidor (${res.status})`)
+        return res.json()
+      })
       .then(data => {
-        setTransactions(data.data)
-        setPagination(data.pagination)
+        setTransactions(data.data || [])
+        setPagination(data.pagination || null)
         setLoading(false)
       })
       .catch(err => {
         console.error('Erro ao buscar transacoes:', err)
+        setError(err.message)
         setLoading(false)
       })
   }, [page, limit])
@@ -58,11 +65,15 @@ export default function History() {
   }
 
   return (
-    <div>
+    <div className="history-container">
       <h1>Historico de Transacoes</h1>
 
       {loading ? (
         <p>Carregando...</p>
+      ) : error ? (
+        <p className="feedback-error">{error}</p>
+      ) : transactions.length === 0 ? (
+        <p>Nenhuma transacao encontrada.</p>
       ) : (
         <>
           {/* Lista de transacoes */}
@@ -70,48 +81,64 @@ export default function History() {
             {transactions.map(tx => (
               <div key={tx.id} className="transaction-item">
                 <p>
-                  ID: <span className="transaction-id" data-value={tx.id}>{tx.id}</span>
+                  <span className="field-label">ID:</span>
+                  <span className="transaction-id" data-value={tx.id}>{tx.id}</span>
                 </p>
                 <p>
-                  Status: <span className="transaction-status" data-value={tx.status}>{tx.status}</span>
+                  <span className="field-label">Status:</span>
+                  <span className="transaction-status" data-value={tx.status}>{tx.status}</span>
                 </p>
                 <p>
-                  Valor: <span className="transaction-amount" data-value={tx.amount_cents}>
+                  <span className="field-label">Valor:</span>
+                  <span className="transaction-amount" data-value={tx.amount_cents}>
                     R$ {(tx.amount_cents / 100).toFixed(2)}
                   </span>
                 </p>
                 <p>
-                  Bandeira: <span className="transaction-brand" data-value={tx.card_brand}>{tx.card_brand}</span>
+                  <span className="field-label">Bandeira:</span>
+                  <span className="transaction-brand" data-value={tx.card_brand}>{tx.card_brand}</span>
                 </p>
                 <p>
-                  Parcelas: <span className="transaction-installments" data-value={tx.installments}>{tx.installments}x</span>
+                  <span className="field-label">Parcelas:</span>
+                  <span className="transaction-installments" data-value={tx.installments}>{tx.installments}x</span>
                 </p>
                 <p>
-                  Valor parcela: <span className="transaction-installment-amount" data-value={tx.installment_amount}>
+                  <span className="field-label">Valor parcela:</span>
+                  <span className="transaction-installment-amount" data-value={tx.installment_amount}>
                     R$ {(tx.installment_amount / 100).toFixed(2)}
                   </span>
                 </p>
                 <p>
-                  Total c/ juros: <span className="transaction-total" data-value={tx.total_with_interest}>
+                  <span className="field-label">Total c/ juros:</span>
+                  <span className="transaction-total" data-value={tx.total_with_interest}>
                     R$ {(tx.total_with_interest / 100).toFixed(2)}
                   </span>
                 </p>
                 <p>
-                  Taxa: <span className="transaction-fee" data-value={tx.fee_cents}>
+                  <span className="field-label">Taxa:</span>
+                  <span className="transaction-fee" data-value={tx.fee_cents}>
                     R$ {(tx.fee_cents / 100).toFixed(2)}
                   </span>
                 </p>
                 <p>
-                  Descricao: <span className="transaction-description" data-value={tx.description}>{tx.description}</span>
+                  <span className="field-label">Descricao:</span>
+                  <span className="transaction-description" data-value={tx.description}>{tx.description}</span>
                 </p>
                 <p>
-                  Cartao: <span className="transaction-card" data-value={tx.card_last4}>****{tx.card_last4}</span>
+                  <span className="field-label">Cartao:</span>
+                  <span className="transaction-card" data-value={tx.card_last4}>****{tx.card_last4}</span>
                 </p>
                 <p>
-                  Data: <span className="transaction-date" data-value={tx.created_at}>
+                  <span className="field-label">Data:</span>
+                  <span className="transaction-date" data-value={tx.created_at}>
                     {new Date(tx.created_at).toLocaleString('pt-BR')}
                   </span>
                 </p>
+
+                {/* Link para detalhes */}
+                <Link to={`/transaction/${tx.id}`} className="transaction-link">
+                  Ver detalhes →
+                </Link>
 
                 {/* Botao de estorno - aparece apenas se status for approved */}
                 {tx.status === 'approved' && (
@@ -127,8 +154,8 @@ export default function History() {
 
           {/* Paginacao */}
           {pagination && (
-            <div>
-              <p>
+            <div className="pagination-controls">
+              <p className="pagination-info">
                 Pagina{' '}
                 <span className="pagination-current" data-value={pagination.page}>
                   {pagination.page}
