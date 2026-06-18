@@ -5,7 +5,7 @@
     "db:generate": "prisma generate",
     "db:push": "prisma db push",
     "db:setup": "npm run db:generate && npm run db:push",
-    "start": "set DATABASE_URL=file:../data.db && npm run db:setup && node --experimental-strip-types src/index.js"
+    "start": "npm run db:setup && node --experimental-strip-types src/index.js"
   },
   "dependencies": {
     "fastify": "^5.8.0",

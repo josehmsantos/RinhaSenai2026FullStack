@@ -26,7 +26,7 @@ function isExpired(expiration) {
 function calcInterest(amountCents, installments) {
   if (installments === 1) return { total: amountCents, installmentAmount: amountCents }
   const rate = installments <= 6 ? 0.02 : 0.04
-  const total = Math.round(amountCents * Math.pow(1 + rate, installments))
+  const total = Math.ceil(amountCents * Math.pow(1 + rate, installments))
   const installmentAmount = Math.ceil(total / installments)
   return { total, installmentAmount }
 }
@@ -70,13 +70,23 @@ export default async function (fastify) {
       return reply.code(422).send({ error: 'description inválida' })
     }
 
-    // --- BANDEIRA ---
-    const brand = detectBrand(card_number)
-    if (!brand) {
-      return reply.code(422).send({ error: 'Bandeira desconhecida' })
-    }
-
     const cardLast4 = card_number.slice(-4)
+
+    // --- CARTÃO 9999 = DECLINED (ANTES da validação de bandeira) ---
+    const isDeclinedCard = card_number.startsWith('9999')
+    let status = isDeclinedCard ? 'declined' : 'approved'
+
+    // --- BANDEIRA ---
+    let brand = detectBrand(card_number)
+    if (!brand) {
+      // Cartão 9999 tem bandeira desconhecida mas é aceito como declined
+      if (isDeclinedCard) {
+        // Usa marca "unknown" para salvar no banco
+        brand = { name: 'unknown', fee: 0 }
+      } else {
+        return reply.code(422).send({ error: 'Bandeira desconhecida' })
+      }
+    }
 
     // --- IDEMPOTÊNCIA ---
     if (idempotency_key) {
@@ -96,12 +106,9 @@ export default async function (fastify) {
       return reply.code(422).send({ error: 'Valor mínimo por parcela é R$10,00' })
     }
 
-    // --- CARTÃO 9999 = DECLINED ---
-    let status = card_number.startsWith('9999') ? 'declined' : 'approved'
-
     // --- TAXA E LÍQUIDO ---
-    const feeCents = Math.round(totalWithInterest * brand.fee)
-    const netAmount = totalWithInterest - feeCents
+    const feeCents = Math.round(amount_cents * brand.fee)
+    const netAmount = amount_cents - feeCents
 
     try {
       // --- CRIAÇÃO ATÔMICA (com checagem do limite diário) ---
