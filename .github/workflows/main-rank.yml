@@ -95,7 +95,8 @@ jobs:
 
             kill $SERVER_PID 2>/dev/null
             wait $SERVER_PID 2>/dev/null || true
-            sleep 1
+            fuser -k 3000/tcp 2>/dev/null || true
+            sleep 2
           done
 
       - name: Generate leaderboard
